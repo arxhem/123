@@ -54,6 +54,27 @@ proc finish {} {
 }
 
 $ns run
+BEGIN {
+	tcp_count =0;
+	tcp_count1 = 0;
+	udp_count = 0;
+	udp_count1 = 0;
+}
+{
+if($1 == "d" && $5 == "tcp")
+	tcp_count++;
+if($1 == "r" && $5 == "tcp")
+	tcp_count1++;
+if($1 == "d" && $5 == "cbr")
+	udp_count++;
+if($1 == "r" && $5 == "cbr")
+	udp_count1++;
+}
+END{
+	printf("\nNo. of packets received & dropped in TCP = %d & %d", tcp_count1, tcp_count);
+	printf("\nNo. of packets received & dropped in UDP = %d & %d\n", udp_count1, udp_count);
+}
+
 ----------------------------2-----------------------------------------------------------------------------------
 
 
@@ -145,6 +166,38 @@ exec xgraph win2.tr &
 exit 0
 }
 $ns run
+BEGIN{
+	last=0;
+	tcp_sz=0;
+}
+{
+cbr_sz=0;
+total_sz=0;
+}
+{
+	action=$1;
+	time=$2;
+	from=$3;
+	to=$4;
+	type=$5;
+	pktsize=$6;
+	flow_id=$8;
+	src=$9;
+	dst = $10;
+	seq_no=$11;
+	packet_id=$12;
+	if(type=="tcp" && action=="r" && to=="3")
+	 	tcp_sz +=pktsize;
+	if(type=="cbr" && action=="r" && to=="3")
+	 	cbr_sz +=pktsize;
+	 	total_sz+=pktsize;
+ }
+ END{
+	 printf("Time = %f\n",time);
+	 printf("TCP Size = %f\n",tcp_sz);
+	 printf("Ack size = %f\n",cbr_sz);
+	 printf("Total size = %f\n",total_sz);
+ }
 -----------------------------3---------------------------------
 
 set ns [new Simulator]
@@ -259,6 +312,20 @@ $ns at 15.1 "finish"
 $ns run
 }
 $ns run
+BEGIN{
+	count=0;
+	time=0;
+}
+{
+	if ($1=="r" && $4==1 && $5=="tcp") {
+		count+=$6;
+		time=$2;
+		printf("\n%f\t%f",time,(count)/1000000);
+	}
+}
+END{
+}
+
 ---------------------------------5-------------------
 set ns [new Simulator -multicast on]
 set tf [open mcast.tr w]
